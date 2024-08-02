@@ -1,0 +1,141 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "end-2-end-DE-ADF"
+		},
+		"Generic_SQLServer_DB_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Generic_SQLServer_DB_ls'",
+			"defaultValue": "Integrated Security=True;Data Source=@{linkedService().serverName};Initial Catalog=@{linkedService().databaseName}"
+		},
+		"On_Prem_SQLSERVER_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'On_Prem_SQLSERVER_ls'",
+			"defaultValue": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012"
+		},
+		"end2endadedl_ls_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'end2endadedl_ls'"
+		},
+		"end2endadesa_blob_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'end2endadesa_blob_ls'"
+		},
+		"ls_AZ_SQL_tybul_demo_DB_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_AZ_SQL_tybul_demo_DB'"
+		},
+		"E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://E2E-DE-RealTime-kv.vault.azure.net/"
+		},
+		"Generic_SQLServer_DB_ls_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "@{linkedService().userName}"
+		},
+		"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+		},
+		"end2endadedl_ls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://end2endadedl.dfs.core.windows.net/"
+		},
+		"NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName": {
+			"type": "string",
+			"defaultValue": "@triggerBody().fileName"
+		},
+		"NewStorageEventTrigger_1_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/1ff79091-37e6-4c57-a075-6fe46c0a63e5/resourceGroups/End_to_End_Azure_Data_Engineering_Real_Time_Project/providers/Microsoft.Storage/storageAccounts/end2endadedl"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "end-2-end-DE-ADF_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"end2endadedl_ls_accountKey": {
+						"value": "[parameters('end2endadedl_ls_accountKey')]"
+					},
+					"end2endadesa_blob_ls_connectionString": {
+						"value": "[parameters('end2endadesa_blob_ls_connectionString')]"
+					},
+					"ls_AZ_SQL_tybul_demo_DB_connectionString": {
+						"value": "[parameters('ls_AZ_SQL_tybul_demo_DB_connectionString')]"
+					},
+					"E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl": {
+						"value": "[parameters('E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl')]"
+					},
+					"end2endadedl_ls_properties_typeProperties_url": {
+						"value": "[parameters('end2endadedl_ls_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "end-2-end-DE-ADF_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Generic_SQLServer_DB_ls_connectionString": {
+						"value": "[parameters('Generic_SQLServer_DB_ls_connectionString')]"
+					},
+					"On_Prem_SQLSERVER_ls_connectionString": {
+						"value": "[parameters('On_Prem_SQLSERVER_ls_connectionString')]"
+					},
+					"Generic_SQLServer_DB_ls_properties_typeProperties_userName": {
+						"value": "[parameters('Generic_SQLServer_DB_ls_properties_typeProperties_userName')]"
+					},
+					"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
+						"value": "[parameters('On_Prem_SQLSERVER_ls_properties_typeProperties_userName')]"
+					},
+					"NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName": {
+						"value": "[parameters('NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName')]"
+					},
+					"NewStorageEventTrigger_1_properties_typeProperties_scope": {
+						"value": "[parameters('NewStorageEventTrigger_1_properties_typeProperties_scope')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'end-2-end-DE-ADF_ArmTemplate_0')]"
+			]
+		}
+	]
+}

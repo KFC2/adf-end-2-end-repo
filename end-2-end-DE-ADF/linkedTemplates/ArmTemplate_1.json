@@ -1,0 +1,1328 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "end-2-end-DE-ADF"
+		},
+		"Generic_SQLServer_DB_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'Generic_SQLServer_DB_ls'",
+			"defaultValue": "Integrated Security=True;Data Source=@{linkedService().serverName};Initial Catalog=@{linkedService().databaseName}"
+		},
+		"On_Prem_SQLSERVER_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'On_Prem_SQLSERVER_ls'",
+			"defaultValue": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012"
+		},
+		"Generic_SQLServer_DB_ls_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "@{linkedService().userName}"
+		},
+		"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+		},
+		"NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName": {
+			"type": "string",
+			"defaultValue": "@triggerBody().fileName"
+		},
+		"NewStorageEventTrigger_1_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/1ff79091-37e6-4c57-a075-6fe46c0a63e5/resourceGroups/End_to_End_Azure_Data_Engineering_Real_Time_Project/providers/Microsoft.Storage/storageAccounts/end2endadedl"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_end2endadesa_generic_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "end2endadesa_blob_ls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string"
+					},
+					"directory": {
+						"type": "string"
+					},
+					"filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().filename",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Generic_SQLServer_DB_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"serverName": {
+						"type": "string"
+					},
+					"databaseName": {
+						"type": "string"
+					},
+					"userName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('Generic_SQLServer_DB_ls_connectionString')]",
+					"userName": "[parameters('Generic_SQLServer_DB_ls_properties_typeProperties_userName')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "E2E_DE_AzureKeyVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "My-Windows-PC-Pass"
+					}
+				},
+				"connectVia": {
+					"referenceName": "my-self-hosted-IR",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/On_Prem_SQLSERVER_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('On_Prem_SQLSERVER_ls_connectionString')]",
+					"userName": "[parameters('On_Prem_SQLSERVER_ls_properties_typeProperties_userName')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "E2E_DE_AzureKeyVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "My-Windows-PC-Pass"
+					}
+				},
+				"connectVia": {
+					"referenceName": "my-self-hosted-IR",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/NewStorageEventTrigger_1')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "StorageEventTriggerDemo",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"fileName": "[parameters('NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName')]"
+						}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/raw/blobs/",
+					"blobPathEndsWith": "R.csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('NewStorageEventTrigger_1_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ADDRESS_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "AddressID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "AddressLine1",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AddressLine2",
+						"type": "nvarchar"
+					},
+					{
+						"name": "City",
+						"type": "nvarchar"
+					},
+					{
+						"name": "StateProvince",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CountryRegion",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PostalCode",
+						"type": "nvarchar"
+					},
+					{
+						"name": "rowguid",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "Address"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Customer_SQL_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "NameStyle",
+						"type": "bit"
+					},
+					{
+						"name": "Title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "FirstName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "MiddleName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "LastName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Suffix",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CompanyName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "SalesPerson",
+						"type": "nvarchar"
+					},
+					{
+						"name": "EmailAddress",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Phone",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PasswordHash",
+						"type": "varchar"
+					},
+					{
+						"name": "PasswordSalt",
+						"type": "varchar"
+					},
+					{
+						"name": "rowguid",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "Customer"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Generic_onPrem_SQLSERVER_DS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Generic_SQLServer_DB_ls",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"serverName": {
+							"value": "@dataset().ds_serverName",
+							"type": "Expression"
+						},
+						"databaseName": {
+							"value": "@dataset().ds_databaseName",
+							"type": "Expression"
+						},
+						"userName": {
+							"value": "@dataset().ds_userName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_serverName": {
+						"type": "string"
+					},
+					"ds_databaseName": {
+						"type": "string"
+					},
+					"ds_userName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Generic_SQLServer_DB_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SQLSERVER_Table_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SQLSERVER_all_Tables_ds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SalesLT_MetadataDrivenCopyTask_l2y_ControlDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "SalesLT_MetadataDrivenCopyTask_l2y_20240617"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "AdventureWorksLT2012",
+					"table": "MainControlTable_ADF"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SalesLT_MetadataDrivenCopyTask_l2y_SourceDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "On_Prem_SQLSERVER_ls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"cw_schema": {
+						"type": "String"
+					},
+					"cw_table": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "SalesLT_MetadataDrivenCopyTask_l2y_20240617"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().cw_schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().cw_table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/On_Prem_SQLSERVER_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_1_SCD2_Demo')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_Customer_Input_File",
+								"type": "DatasetReference"
+							},
+							"name": "SourceCustomerFile"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_Az_SQL_tybul_demo_DB_Cust_Table",
+								"type": "DatasetReference"
+							},
+							"name": "ExistingTargetTableLookup"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_Az_SQL_tybul_demo_DB_Cust_Table",
+								"type": "DatasetReference"
+							},
+							"name": "InsOrUpdateTargetCustomerTable"
+						}
+					],
+					"transformations": [
+						{
+							"name": "GetHASHFromSourceFile"
+						},
+						{
+							"name": "GetHASHFromExistingTable"
+						},
+						{
+							"name": "CheckForNewRecordsOrUpdate"
+						},
+						{
+							"name": "DeriveDimensionColumnsForInsUpd"
+						},
+						{
+							"name": "AddSurrogateKey"
+						},
+						{
+							"name": "UpdateOldRecord"
+						},
+						{
+							"name": "GetMaxSurrogateKey"
+						},
+						{
+							"name": "JoinWithMaxSurrKey"
+						},
+						{
+							"name": "FilterForActiveRecsOnly"
+						},
+						{
+							"name": "FilterForUpdatedValues"
+						},
+						{
+							"name": "MarkAsUpdate"
+						},
+						{
+							"name": "DropUnwantedColumnsDuringInsert"
+						},
+						{
+							"name": "DropUnwantedColumnsDuringUpdate"
+						},
+						{
+							"name": "UnionAllData"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Name as string,",
+						"          Location as string,",
+						"          Email as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> SourceCustomerFile",
+						"source(output(",
+						"          CustomerId as integer,",
+						"          Name as string,",
+						"          Location as string,",
+						"          Email as string,",
+						"          Isactive as integer,",
+						"          StartDate as timestamp,",
+						"          EndDate as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> ExistingTargetTableLookup",
+						"SourceCustomerFile derive(input_id_hash = md5(Name),",
+						"          input_columns_hash = md5(Name,Location,Email)) ~> GetHASHFromSourceFile",
+						"FilterForActiveRecsOnly derive(Existing_id_hash = md5(Name),",
+						"          Existing_Columns_Hash = md5(Name,Location,Email)) ~> GetHASHFromExistingTable",
+						"GetHASHFromSourceFile, GetHASHFromExistingTable exists(input_id_hash == Existing_id_hash",
+						"     && input_columns_hash == Existing_Columns_Hash,",
+						"     negate:true,",
+						"     broadcast: 'auto')~> CheckForNewRecordsOrUpdate",
+						"JoinWithMaxSurrKey derive(CustomerId = SurrKey +\r",
+						"   iif( isNull(MaxSurrogateKey), 0, MaxSurrogateKey),",
+						"          isActive = 1,",
+						"          EndDate = toTimestamp('31-12-9999 00:00:00', 'mm-dd-yyyy HH:mm:ss'),",
+						"          StartDate = currentTimestamp()) ~> DeriveDimensionColumnsForInsUpd",
+						"CheckForNewRecordsOrUpdate keyGenerate(output(SurrKey as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> AddSurrogateKey",
+						"FilterForUpdatedValues derive(NewisActive = 0,",
+						"          EndDate = currentTimestamp()) ~> UpdateOldRecord",
+						"GetHASHFromExistingTable aggregate(MaxSurrogateKey = max(\r",
+						"  CustomerId\r",
+						"    )) ~> GetMaxSurrogateKey",
+						"AddSurrogateKey, GetMaxSurrogateKey join(true(),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinWithMaxSurrKey",
+						"ExistingTargetTableLookup filter(Isactive ==1) ~> FilterForActiveRecsOnly",
+						"GetHASHFromExistingTable, CheckForNewRecordsOrUpdate exists(Existing_id_hash == input_id_hash,",
+						"     negate:false,",
+						"     broadcast: 'auto')~> FilterForUpdatedValues",
+						"UpdateOldRecord alterRow(updateIf(true())) ~> MarkAsUpdate",
+						"DeriveDimensionColumnsForInsUpd select(mapColumn(",
+						"          CustomerId,",
+						"          Name,",
+						"          Location,",
+						"          Email,",
+						"          Isactive = isActive,",
+						"          EndDate,",
+						"          StartDate",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> DropUnwantedColumnsDuringInsert",
+						"MarkAsUpdate select(mapColumn(",
+						"          CustomerId,",
+						"          Name,",
+						"          Location,",
+						"          Email,",
+						"          Isactive = NewisActive,",
+						"          StartDate,",
+						"          EndDate",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> DropUnwantedColumnsDuringUpdate",
+						"DropUnwantedColumnsDuringInsert, DropUnwantedColumnsDuringUpdate union(byName: true)~> UnionAllData",
+						"UnionAllData sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          CustomerId as integer,",
+						"          Name as string,",
+						"          Location as string,",
+						"          Email as string,",
+						"          Isactive as integer,",
+						"          StartDate as timestamp,",
+						"          EndDate as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:true,",
+						"     upsertable:false,",
+						"     keys:['Name'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          CustomerId,",
+						"          Name,",
+						"          Location,",
+						"          Email,",
+						"          Isactive,",
+						"          StartDate,",
+						"          EndDate",
+						"     )) ~> InsOrUpdateTargetCustomerTable"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Copy Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy SQLSERVER Table ADDRESS",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ADDRESS_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "address_csv",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-05-07T17:32:54Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ADDRESS_ds')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Customer_Copy_pl')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Copy Customer SQL server table into ASDL container",
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Customer_SQL_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "Customer_csv_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-06-08T21:35:46Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Customer_SQL_ds')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DP203_Generic_Tybul_Dynamic_Copy_pl')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "To dynamically copy the on-premise SQL server SalesLT database tables into data lake by partitions.",
+				"activities": [
+					{
+						"name": "Get List Of Tables to Process",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "  select QUOTENAME(t.name) AS tableName, QUOTENAME(SCHEMA_NAME(t.schema_id)) as schemaName \n  FROM SYS.TABLES t",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Generic_onPrem_SQLSERVER_DS",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_serverName": {
+										"value": "@pipeline().parameters.pl_serverName",
+										"type": "Expression"
+									},
+									"ds_databaseName": {
+										"value": "@pipeline().parameters.pl_databaseName",
+										"type": "Expression"
+									},
+									"ds_userName": {
+										"value": "@pipeline().parameters.pl_userName",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Iterate Over All tables",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get List Of Tables to Process",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get List Of Tables to Process').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy data from Table",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"sqlReaderQuery": {
+												"value": "@concat('SELECT * FROM ',item().schemaName,'.',item().tableName)\n\n",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "Generic_onPrem_SQLSERVER_DS",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_serverName": {
+													"value": "@pipeline().parameters.pl_serverName",
+													"type": "Expression"
+												},
+												"ds_databaseName": {
+													"value": "@pipeline().parameters.pl_databaseName",
+													"type": "Expression"
+												},
+												"ds_userName": {
+													"value": "@pipeline().parameters.pl_userName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "GenericADLSg2CSV_ds",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_serverName": {
+													"value": "@pipeline().parameters.pl_serverName",
+													"type": "Expression"
+												},
+												"ds_databaseName": {
+													"value": "@pipeline().parameters.pl_databaseName",
+													"type": "Expression"
+												},
+												"ds_schemaName": {
+													"value": "@item().schemaName",
+													"type": "Expression"
+												},
+												"ds_tableName": {
+													"value": "@item().tableName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_serverName": {
+						"type": "string",
+						"defaultValue": "localhost"
+					},
+					"pl_databaseName": {
+						"type": "string",
+						"defaultValue": "AdventureWorksLT2012"
+					},
+					"pl_userName": {
+						"type": "string",
+						"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-07-25T10:46:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Generic_onPrem_SQLSERVER_DS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_1_SCD2_Demo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_1_SCD2_Demo",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_1_SCD2_Demo",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SourceCustomerFile": {
+										"ds_fileName": {
+											"value": "@pipeline().parameters.p_inputFileName",
+											"type": "Expression"
+										}
+									},
+									"ExistingTargetTableLookup": {},
+									"InsOrUpdateTargetCustomerTable": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Coarse"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"p_inputFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "SCD2_Demo"
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-08-02T10:33:13Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_1_SCD2_Demo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_Copy_All_SQLSERVER_Tables_')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup SQLSERVER Schema Tables",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "SELECT \n  s.name as SchemaName\n  ,t.name as TableName\nFROM SYS.TABLES T\nINNER JOIN SYS.schemas S\nON T.schema_id = S.schema_id\nWHERE \nS.name = 'SalesLT'\n",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "SQLSERVER_all_Tables_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "For Each Each Schema table",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup SQLSERVER Schema Tables",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup SQLSERVER Schema Tables').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy Each Table",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"sqlReaderQuery": {
+												"value": "@{concat('select * from ',item().SchemaName,'.',item().TableName \r\n)}",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SQLSERVER_Table_ds",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "Output_Tables_csv",
+											"type": "DatasetReference",
+											"parameters": {
+												"p_schemaName": {
+													"value": "@item().SchemaName",
+													"type": "Expression"
+												},
+												"p_tableName": {
+													"value": "@item().TableName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-05-07T18:13:53Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SQLSERVER_all_Tables_ds')]",
+				"[concat(variables('factoryId'), '/datasets/SQLSERVER_Table_ds')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_Load_SQL_Tables_To_ADLS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Load only the required tables from on-prem SQL tables into ADLSg2",
+				"activities": [
+					{
+						"name": "Confiig_Lookup",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": {
+									"value": "@concat('select * from ',variables('configTableName'), ' WHERE LOAD_FLAG = ',variables('loadFlag'))",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Customer_SQL_ds",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Parallel Write to ADLS",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Confiig_Lookup",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Confiig_Lookup').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "Parallel Write",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"sqlReaderQuery": {
+												"value": "@concat('SELECT * FROM ',item().TABLE_SCHEMA,'.',item().TABLE_NAME)",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "PreserveHierarchy"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SQLSERVER_Table_ds",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_end2endadesa_generic_csv",
+											"type": "DatasetReference",
+											"parameters": {
+												"container": {
+													"value": "dynamic-adf-bronze",
+													"type": "Expression"
+												},
+												"directory": {
+													"value": "@item().ADLS_PATH",
+													"type": "Expression"
+												},
+												"filename": {
+													"value": "@concat(item().TABLE_NAME,'.csv')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"configTableName": {
+						"type": "String",
+						"defaultValue": "DBO.ADLS_LOAD_CONFIG"
+					},
+					"loadFlag": {
+						"type": "String",
+						"defaultValue": "1"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-06-20T06:44:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Customer_SQL_ds')]",
+				"[concat(variables('factoryId'), '/datasets/SQLSERVER_Table_ds')]",
+				"[concat(variables('factoryId'), '/datasets/ds_end2endadesa_generic_csv')]"
+			]
+		}
+	]
+}
