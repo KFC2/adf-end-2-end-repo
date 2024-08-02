@@ -1,0 +1,25 @@
+{
+	"name": "StorageEventTriggerDemo",
+	"properties": {
+		"description": "This Expecting a *.csv file in container raw-dp203-tybul",
+		"activities": [
+			{
+				"name": "Wait1",
+				"type": "Wait",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 1
+				}
+			}
+		],
+		"parameters": {
+			"fileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-06-17T10:29:11Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,183 @@
+{
+	"name": "df_1_SCD2_Demo",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_Customer_Input_File",
+						"type": "DatasetReference"
+					},
+					"name": "SourceCustomerFile"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_Az_SQL_tybul_demo_DB_Cust_Table",
+						"type": "DatasetReference"
+					},
+					"name": "ExistingTargetTableLookup"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_Az_SQL_tybul_demo_DB_Cust_Table",
+						"type": "DatasetReference"
+					},
+					"name": "InsOrUpdateTargetCustomerTable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "GetHASHFromSourceFile"
+				},
+				{
+					"name": "GetHASHFromExistingTable"
+				},
+				{
+					"name": "CheckForNewRecordsOrUpdate"
+				},
+				{
+					"name": "DeriveDimensionColumnsForInsUpd"
+				},
+				{
+					"name": "AddSurrogateKey"
+				},
+				{
+					"name": "UpdateOldRecord"
+				},
+				{
+					"name": "GetMaxSurrogateKey"
+				},
+				{
+					"name": "JoinWithMaxSurrKey"
+				},
+				{
+					"name": "FilterForActiveRecsOnly"
+				},
+				{
+					"name": "FilterForUpdatedValues"
+				},
+				{
+					"name": "MarkAsUpdate"
+				},
+				{
+					"name": "DropUnwantedColumnsDuringInsert"
+				},
+				{
+					"name": "DropUnwantedColumnsDuringUpdate"
+				},
+				{
+					"name": "UnionAllData"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Name as string,",
+				"          Location as string,",
+				"          Email as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SourceCustomerFile",
+				"source(output(",
+				"          CustomerId as integer,",
+				"          Name as string,",
+				"          Location as string,",
+				"          Email as string,",
+				"          Isactive as integer,",
+				"          StartDate as timestamp,",
+				"          EndDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> ExistingTargetTableLookup",
+				"SourceCustomerFile derive(input_id_hash = md5(Name),",
+				"          input_columns_hash = md5(Name,Location,Email)) ~> GetHASHFromSourceFile",
+				"FilterForActiveRecsOnly derive(Existing_id_hash = md5(Name),",
+				"          Existing_Columns_Hash = md5(Name,Location,Email)) ~> GetHASHFromExistingTable",
+				"GetHASHFromSourceFile, GetHASHFromExistingTable exists(input_id_hash == Existing_id_hash",
+				"     && input_columns_hash == Existing_Columns_Hash,",
+				"     negate:true,",
+				"     broadcast: 'auto')~> CheckForNewRecordsOrUpdate",
+				"JoinWithMaxSurrKey derive(CustomerId = SurrKey +\r",
+				"   iif( isNull(MaxSurrogateKey), 0, MaxSurrogateKey),",
+				"          isActive = 1,",
+				"          EndDate = toTimestamp('31-12-9999 00:00:00', 'mm-dd-yyyy HH:mm:ss'),",
+				"          StartDate = currentTimestamp()) ~> DeriveDimensionColumnsForInsUpd",
+				"CheckForNewRecordsOrUpdate keyGenerate(output(SurrKey as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> AddSurrogateKey",
+				"FilterForUpdatedValues derive(NewisActive = 0,",
+				"          EndDate = currentTimestamp()) ~> UpdateOldRecord",
+				"GetHASHFromExistingTable aggregate(MaxSurrogateKey = max(\r",
+				"  CustomerId\r",
+				"    )) ~> GetMaxSurrogateKey",
+				"AddSurrogateKey, GetMaxSurrogateKey join(true(),",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinWithMaxSurrKey",
+				"ExistingTargetTableLookup filter(Isactive ==1) ~> FilterForActiveRecsOnly",
+				"GetHASHFromExistingTable, CheckForNewRecordsOrUpdate exists(Existing_id_hash == input_id_hash,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> FilterForUpdatedValues",
+				"UpdateOldRecord alterRow(updateIf(true())) ~> MarkAsUpdate",
+				"DeriveDimensionColumnsForInsUpd select(mapColumn(",
+				"          CustomerId,",
+				"          Name,",
+				"          Location,",
+				"          Email,",
+				"          Isactive = isActive,",
+				"          EndDate,",
+				"          StartDate",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DropUnwantedColumnsDuringInsert",
+				"MarkAsUpdate select(mapColumn(",
+				"          CustomerId,",
+				"          Name,",
+				"          Location,",
+				"          Email,",
+				"          Isactive = NewisActive,",
+				"          StartDate,",
+				"          EndDate",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> DropUnwantedColumnsDuringUpdate",
+				"DropUnwantedColumnsDuringInsert, DropUnwantedColumnsDuringUpdate union(byName: true)~> UnionAllData",
+				"UnionAllData sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CustomerId as integer,",
+				"          Name as string,",
+				"          Location as string,",
+				"          Email as string,",
+				"          Isactive as integer,",
+				"          StartDate as timestamp,",
+				"          EndDate as timestamp",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['Name'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          CustomerId,",
+				"          Name,",
+				"          Location,",
+				"          Email,",
+				"          Isactive,",
+				"          StartDate,",
+				"          EndDate",
+				"     )) ~> InsOrUpdateTargetCustomerTable"
+			]
+		}
+	}
+}

@@ -1,0 +1,38 @@
+{
+	"name": "Generic_onPrem_SQLSERVER_DS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Generic_SQLServer_DB_ls",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"serverName": {
+					"value": "@dataset().ds_serverName",
+					"type": "Expression"
+				},
+				"databaseName": {
+					"value": "@dataset().ds_databaseName",
+					"type": "Expression"
+				},
+				"userName": {
+					"value": "@dataset().ds_userName",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_serverName": {
+				"type": "string"
+			},
+			"ds_databaseName": {
+				"type": "string"
+			},
+			"ds_userName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

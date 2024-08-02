@@ -1,0 +1,9 @@
+{
+	"name": "end-2-end-DE-ADF",
+	"location": "uksouth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "7ff815e8-ddc3-4c99-a66c-078229bf0c0b",
+		"tenantId": "9d9f057d-081e-4f08-b152-800870b62f19"
+	}
+}

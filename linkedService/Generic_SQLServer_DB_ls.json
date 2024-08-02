@@ -1,0 +1,35 @@
+{
+	"name": "Generic_SQLServer_DB_ls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"serverName": {
+				"type": "string"
+			},
+			"databaseName": {
+				"type": "string"
+			},
+			"userName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=True;Data Source=@{linkedService().serverName};Initial Catalog=@{linkedService().databaseName}",
+			"userName": "@{linkedService().userName}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "E2E_DE_AzureKeyVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "My-Windows-PC-Pass"
+			}
+		},
+		"connectVia": {
+			"referenceName": "my-self-hosted-IR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

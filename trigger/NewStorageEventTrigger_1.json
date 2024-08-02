@@ -1,0 +1,28 @@
+{
+	"name": "NewStorageEventTrigger_1",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "StorageEventTriggerDemo",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"fileName": "@triggerBody().fileName"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/raw/blobs/",
+			"blobPathEndsWith": "R.csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/1ff79091-37e6-4c57-a075-6fe46c0a63e5/resourceGroups/End_to_End_Azure_Data_Engineering_Real_Time_Project/providers/Microsoft.Storage/storageAccounts/end2endadedl",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}

@@ -1,0 +1,34 @@
+{
+	"name": "SalesLT_MetadataDrivenCopyTask_l2y_SourceDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "On_Prem_SQLSERVER_ls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"cw_schema": {
+				"type": "String"
+			},
+			"cw_table": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "SalesLT_MetadataDrivenCopyTask_l2y_20240617"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().cw_schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().cw_table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

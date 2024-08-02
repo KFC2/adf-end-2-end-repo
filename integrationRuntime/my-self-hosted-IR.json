@@ -1,0 +1,7 @@
+{
+	"name": "my-self-hosted-IR",
+	"properties": {
+		"type": "SelfHosted",
+		"description": "To access on-premise s SQL server DB"
+	}
+}

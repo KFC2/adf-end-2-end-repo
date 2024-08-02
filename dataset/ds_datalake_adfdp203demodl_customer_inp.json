@@ -1,0 +1,38 @@
+{
+	"name": "ds_datalake_adfdp203demodl_customer_inp",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "end2endadedl_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "CUSTOMER_0.csv",
+				"folderPath": "inputs",
+				"fileSystem": "end2end-scd2-demo"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Name",
+				"type": "String"
+			},
+			{
+				"name": "Location",
+				"type": "String"
+			},
+			{
+				"name": "Email",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,11 @@
+{
+	"name": "E2E_DE_AzureKeyVault_ls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://E2E-DE-RealTime-kv.vault.azure.net/"
+		}
+	}
+}

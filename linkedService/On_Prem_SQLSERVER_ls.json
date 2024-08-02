@@ -1,0 +1,24 @@
+{
+	"name": "On_Prem_SQLSERVER_ls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012",
+			"userName": "DESKTOP-EJ0HUUI\\Lakshmanavelu",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "E2E_DE_AzureKeyVault_ls",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "My-Windows-PC-Pass"
+			}
+		},
+		"connectVia": {
+			"referenceName": "my-self-hosted-IR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

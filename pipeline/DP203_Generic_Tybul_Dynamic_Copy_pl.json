@@ -1,0 +1,174 @@
+{
+	"name": "DP203_Generic_Tybul_Dynamic_Copy_pl",
+	"properties": {
+		"description": "To dynamically copy the on-premise SQL server SalesLT database tables into data lake by partitions.",
+		"activities": [
+			{
+				"name": "Get List Of Tables to Process",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "  select QUOTENAME(t.name) AS tableName, QUOTENAME(SCHEMA_NAME(t.schema_id)) as schemaName \n  FROM SYS.TABLES t",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Generic_onPrem_SQLSERVER_DS",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_serverName": {
+								"value": "@pipeline().parameters.pl_serverName",
+								"type": "Expression"
+							},
+							"ds_databaseName": {
+								"value": "@pipeline().parameters.pl_databaseName",
+								"type": "Expression"
+							},
+							"ds_userName": {
+								"value": "@pipeline().parameters.pl_userName",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Iterate Over All tables",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get List Of Tables to Process",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get List Of Tables to Process').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy data from Table",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@concat('SELECT * FROM ',item().schemaName,'.',item().tableName)\n\n",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Generic_onPrem_SQLSERVER_DS",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_serverName": {
+											"value": "@pipeline().parameters.pl_serverName",
+											"type": "Expression"
+										},
+										"ds_databaseName": {
+											"value": "@pipeline().parameters.pl_databaseName",
+											"type": "Expression"
+										},
+										"ds_userName": {
+											"value": "@pipeline().parameters.pl_userName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "GenericADLSg2CSV_ds",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_serverName": {
+											"value": "@pipeline().parameters.pl_serverName",
+											"type": "Expression"
+										},
+										"ds_databaseName": {
+											"value": "@pipeline().parameters.pl_databaseName",
+											"type": "Expression"
+										},
+										"ds_schemaName": {
+											"value": "@item().schemaName",
+											"type": "Expression"
+										},
+										"ds_tableName": {
+											"value": "@item().tableName",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"pl_serverName": {
+				"type": "string",
+				"defaultValue": "localhost"
+			},
+			"pl_databaseName": {
+				"type": "string",
+				"defaultValue": "AdventureWorksLT2012"
+			},
+			"pl_userName": {
+				"type": "string",
+				"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-07-25T10:46:33Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
