@@ -107,7 +107,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"container": {
-											"value": "dynamic-adf-bronze",
+											"value": "e2e-bronze",
 											"type": "Expression"
 										},
 										"directory": {

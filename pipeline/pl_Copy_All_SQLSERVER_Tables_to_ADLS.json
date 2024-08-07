@@ -1,6 +1,7 @@
 {
-	"name": "pl_Copy_All_SQLSERVER_Tables_",
+	"name": "pl_Copy_All_SQLSERVER_Tables_to_ADLS",
 	"properties": {
+		"description": "Copy on-premises SalesLT schema tables into ADLS 'e2e-bronze' container.",
 		"activities": [
 			{
 				"name": "Lookup SQLSERVER Schema Tables",
