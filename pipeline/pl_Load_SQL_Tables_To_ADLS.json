@@ -76,7 +76,7 @@
 								"sink": {
 									"type": "DelimitedTextSink",
 									"storeSettings": {
-										"type": "AzureBlobStorageWriteSettings",
+										"type": "AzureBlobFSWriteSettings",
 										"copyBehavior": "PreserveHierarchy"
 									},
 									"formatSettings": {
@@ -103,7 +103,7 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "ds_end2endadesa_generic_csv",
+									"referenceName": "ds_end2endadedl_generic_csv",
 									"type": "DatasetReference",
 									"parameters": {
 										"container": {

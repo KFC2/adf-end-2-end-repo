@@ -1,8 +1,8 @@
 {
-	"name": "ds_end2endadesa_generic_csv",
+	"name": "ds_end2endadedl_generic_csv",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "end2endadesa_blob_ls",
+			"referenceName": "end2endadedl_adls_ls",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
@@ -20,7 +20,7 @@
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobStorageLocation",
+				"type": "AzureBlobFSLocation",
 				"fileName": {
 					"value": "@dataset().filename",
 					"type": "Expression"
@@ -29,7 +29,7 @@
 					"value": "@dataset().directory",
 					"type": "Expression"
 				},
-				"container": {
+				"fileSystem": {
 					"value": "@dataset().container",
 					"type": "Expression"
 				}
