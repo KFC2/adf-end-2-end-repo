@@ -134,7 +134,41 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": []
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/1_E2E_Bronze_2_Silver_Generic_Transformation"
+				},
+				"linkedServiceName": {
+					"referenceName": "e2e_Azure_Databricks_ls",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Siver_to_Gold_Load",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Bronze_2_Silver_Load",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Shared/2_E2E_Silver_2_Gold_Transformations"
+				},
+				"linkedServiceName": {
+					"referenceName": "e2e_Azure_Databricks_ls",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"annotations": [],
