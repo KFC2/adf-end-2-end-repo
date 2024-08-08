@@ -11,6 +11,9 @@
 		"On_Prem_SQLSERVER_ls_connectionString": {
 			"value": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012"
 		},
+		"end2endadedl_adls_ls_accountKey": {
+			"value": ""
+		},
 		"end2endadedl_ls_accountKey": {
 			"value": ""
 		},
@@ -28,6 +31,12 @@
 		},
 		"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
 			"value": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+		},
+		"e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId": {
+			"value": "0805-162247-ax3vqs1x"
+		},
+		"end2endadedl_adls_ls_properties_typeProperties_url": {
+			"value": "https://end2endadedl.dfs.core.windows.net/"
 		},
 		"end2endadedl_ls_properties_typeProperties_url": {
 			"value": "https://end2endadedl.dfs.core.windows.net/"

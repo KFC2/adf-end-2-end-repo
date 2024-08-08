@@ -17,6 +17,10 @@
 			"metadata": "Secure string for 'connectionString' of 'On_Prem_SQLSERVER_ls'",
 			"defaultValue": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012"
 		},
+		"end2endadedl_adls_ls_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'end2endadedl_adls_ls'"
+		},
 		"end2endadedl_ls_accountKey": {
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'end2endadedl_ls'"
@@ -40,6 +44,14 @@
 		"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+		},
+		"e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0805-162247-ax3vqs1x"
+		},
+		"end2endadedl_adls_ls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://end2endadedl.dfs.core.windows.net/"
 		},
 		"end2endadedl_ls_properties_typeProperties_url": {
 			"type": "string",
@@ -80,6 +92,9 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"end2endadedl_adls_ls_accountKey": {
+						"value": "[parameters('end2endadedl_adls_ls_accountKey')]"
+					},
 					"end2endadedl_ls_accountKey": {
 						"value": "[parameters('end2endadedl_ls_accountKey')]"
 					},
@@ -91,6 +106,9 @@
 					},
 					"E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl": {
 						"value": "[parameters('E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl')]"
+					},
+					"end2endadedl_adls_ls_properties_typeProperties_url": {
+						"value": "[parameters('end2endadedl_adls_ls_properties_typeProperties_url')]"
 					},
 					"end2endadedl_ls_properties_typeProperties_url": {
 						"value": "[parameters('end2endadedl_ls_properties_typeProperties_url')]"
@@ -124,6 +142,9 @@
 					},
 					"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
 						"value": "[parameters('On_Prem_SQLSERVER_ls_properties_typeProperties_userName')]"
+					},
+					"e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId')]"
 					},
 					"NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName": {
 						"value": "[parameters('NewStorageEventTrigger_1_properties_StorageEventTriggerDemo_parameters_fileName')]"

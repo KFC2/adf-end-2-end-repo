@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "end-2-end-DE-ADF"
 		},
+		"end2endadedl_adls_ls_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'end2endadedl_adls_ls'"
+		},
 		"end2endadedl_ls_accountKey": {
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'end2endadedl_ls'"
@@ -22,6 +26,10 @@
 		"E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://E2E-DE-RealTime-kv.vault.azure.net/"
+		},
+		"end2endadedl_adls_ls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://end2endadedl.dfs.core.windows.net/"
 		},
 		"end2endadedl_ls_properties_typeProperties_url": {
 			"type": "string",
@@ -94,6 +102,23 @@
 				"type": "AzureKeyVault",
 				"typeProperties": {
 					"baseUrl": "[parameters('E2E_DE_AzureKeyVault_ls_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/end2endadedl_adls_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('end2endadedl_adls_ls_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('end2endadedl_adls_ls_accountKey')]"
+					}
 				}
 			},
 			"dependsOn": []
@@ -592,43 +617,6 @@
 						}
 					},
 					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/end2endadedl_ls')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_end2end_dl_generic_csv')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "end2endadedl_ls",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"container": {
-						"type": "string"
-					},
-					"directory": {
-						"type": "string"
-					},
-					"filename": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
 				},
 				"schema": []
 			},

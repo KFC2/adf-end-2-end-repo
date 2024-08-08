@@ -17,6 +17,10 @@
 			"metadata": "Secure string for 'connectionString' of 'On_Prem_SQLSERVER_ls'",
 			"defaultValue": "Integrated Security=True;Data Source=localhost;Initial Catalog=AdventureWorksLT2012"
 		},
+		"end2endadedl_adls_ls_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'end2endadedl_adls_ls'"
+		},
 		"end2endadedl_ls_accountKey": {
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'end2endadedl_ls'"
@@ -40,6 +44,14 @@
 		"On_Prem_SQLSERVER_ls_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "DESKTOP-EJ0HUUI\\Lakshmanavelu"
+		},
+		"e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0805-162247-ax3vqs1x"
+		},
+		"end2endadedl_adls_ls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://end2endadedl.dfs.core.windows.net/"
 		},
 		"end2endadedl_ls_properties_typeProperties_url": {
 			"type": "string",
@@ -500,10 +512,11 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_Copy_All_SQLSERVER_Tables_')]",
+			"name": "[concat(parameters('factoryName'), '/pl_Copy_All_SQLSERVER_Tables_to_ADLS')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "Copy on-premises SalesLT schema tables into ADLS 'e2e-bronze' container.",
 				"activities": [
 					{
 						"name": "Lookup SQLSERVER Schema Tables",
@@ -619,6 +632,60 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "Bronze_2_Silver_Load",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "For Each Each Schema table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Shared/1_E2E_Bronze_2_Silver_Generic_Transformation"
+						},
+						"linkedServiceName": {
+							"referenceName": "e2e_Azure_Databricks_ls",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Siver_to_Gold_Load",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Bronze_2_Silver_Load",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Shared/2_E2E_Silver_2_Gold_Transformations"
+						},
+						"linkedServiceName": {
+							"referenceName": "e2e_Azure_Databricks_ls",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -629,6 +696,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/SQLSERVER_all_Tables_ds')]",
+				"[concat(variables('factoryId'), '/linkedServices/e2e_Azure_Databricks_ls')]",
 				"[concat(variables('factoryId'), '/datasets/SQLSERVER_Table_ds')]",
 				"[concat(variables('factoryId'), '/datasets/Output_Tables_csv')]"
 			]
@@ -714,7 +782,7 @@
 										"sink": {
 											"type": "DelimitedTextSink",
 											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings",
+												"type": "AzureBlobFSWriteSettings",
 												"copyBehavior": "PreserveHierarchy"
 											},
 											"formatSettings": {
@@ -742,11 +810,11 @@
 									],
 									"outputs": [
 										{
-											"referenceName": "ds_end2endadesa_generic_csv",
+											"referenceName": "ds_end2endadedl_generic_csv",
 											"type": "DatasetReference",
 											"parameters": {
 												"container": {
-													"value": "dynamic-adf-bronze",
+													"value": "e2e-bronze",
 													"type": "Expression"
 												},
 												"directory": {
@@ -784,7 +852,7 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/Customer_SQL_ds')]",
 				"[concat(variables('factoryId'), '/datasets/SQLSERVER_Table_ds')]",
-				"[concat(variables('factoryId'), '/datasets/ds_end2endadesa_generic_csv')]"
+				"[concat(variables('factoryId'), '/datasets/ds_end2endadedl_generic_csv')]"
 			]
 		},
 		{
@@ -1530,12 +1598,12 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_end2endadesa_generic_csv')]",
+			"name": "[concat(parameters('factoryName'), '/ds_end2endadedl_generic_csv')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "end2endadesa_blob_ls",
+					"referenceName": "end2endadedl_adls_ls",
 					"type": "LinkedServiceReference"
 				},
 				"parameters": {
@@ -1553,7 +1621,7 @@
 				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
-						"type": "AzureBlobStorageLocation",
+						"type": "AzureBlobFSLocation",
 						"fileName": {
 							"value": "@dataset().filename",
 							"type": "Expression"
@@ -1562,7 +1630,7 @@
 							"value": "@dataset().directory",
 							"type": "Expression"
 						},
-						"container": {
+						"fileSystem": {
 							"value": "@dataset().container",
 							"type": "Expression"
 						}
@@ -1575,7 +1643,7 @@
 				"schema": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/end2endadesa_blob_ls')]"
+				"[concat(variables('factoryId'), '/linkedServices/end2endadedl_adls_ls')]"
 			]
 		},
 		{
@@ -1659,6 +1727,48 @@
 				"[concat(variables('factoryId'), '/integrationRuntimes/my-self-hosted-IR')]",
 				"[concat(variables('factoryId'), '/linkedServices/E2E_DE_AzureKeyVault_ls')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/e2e_Azure_Databricks_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "To connect to the databricks workspace 'adb-4439022070268904'",
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-4439022070268904.4.azuredatabricks.net",
+					"accessToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "E2E_DE_AzureKeyVault_ls",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "Databricks-workspace-token"
+					},
+					"existingClusterId": "[parameters('e2e_Azure_Databricks_ls_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/E2E_DE_AzureKeyVault_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/end2endadedl_adls_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('end2endadedl_adls_ls_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('end2endadedl_adls_ls_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/end2endadedl_ls')]",
