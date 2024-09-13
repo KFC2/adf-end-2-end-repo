@@ -31,10 +31,13 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Formula1/demo/Orchestration Demo"
+					"notebookPath": "/Formula1/demo/Orchestration Demo",
+					"baseParameters": {
+						"MyText": "Hello World From ADF!!"
+					}
 				},
 				"linkedServiceName": {
-					"referenceName": "AzureDatabricks_formulaf1_ls",
+					"referenceName": "AzureDatabricks_ManagedInstance_JobCluster_LS",
 					"type": "LinkedServiceReference"
 				}
 			}
